@@ -1,9 +1,9 @@
 # Assignment 3. Maze Escape
 
-Student ID:
-Name:
-Group:
-Maze size (rows x columns):
+Student ID: 250959
+Name: Aizat Kabdyrakmanova
+Group: SE-2519
+Maze size (rows x columns): 11 x 11
 
 This file is the report. Fill it in as you go. How to start: `START_HERE.md`. The task: `docs/Assignment3.pdf`.
 

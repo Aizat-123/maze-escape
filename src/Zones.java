@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 /**
  * Missions 4 and 5. The slides: a directed graph. Cells are 0 .. n-1, slide i goes from s.from()[i] to s.to()[i]
  * and takes s.time()[i]. There are no slides from a cell to itself, and the exit can always be reached from the start.
@@ -19,8 +21,80 @@ public class Zones {
      * Is DAG in Main is 1 when the number of zones equals the number of cells (no cycle), so you do not need a separate check.
      */
     public static int[] kosaraju(Input.Slides s) {
-        // TODO
-        return new int[s.n()];
+        int n = s.n();
+
+        int[][] slidesFrom = Graphs.slidesFrom(s);
+        int[][] slidesInto = Graphs.slidesInto(s);
+
+        boolean[] visited = new boolean[n];
+        int[] order = new int[n];
+        int[] stack = new int[n];
+        int[] nextEdge = new int[n];
+
+        int orderCount = 0;
+
+
+        for (int start = 0; start < n; start++) {
+            if (visited[start]) {
+                continue;
+            }
+
+            int top = 0;
+            stack[0] = start;
+            visited[start] = true;
+
+            while (top >= 0) {
+                int current = stack[top];
+
+                if (nextEdge[current] < slidesFrom[current].length) {
+                    int slideIndex = slidesFrom[current][nextEdge[current]++];
+                    int nextCell = s.to()[slideIndex];
+
+                    if (!visited[nextCell]) {
+                        visited[nextCell] = true;
+                        stack[++top] = nextCell;
+                    }
+                } else {
+                    order[orderCount++] = current;
+                    top--;
+                }
+            }
+        }
+
+
+        int[] zoneOf = new int[n];
+        Arrays.fill(zoneOf, -1);
+
+        int zoneCount = 0;
+
+        for (int i = orderCount - 1; i >= 0; i--) {
+            int start = order[i];
+
+            if (zoneOf[start] != -1) {
+                continue;
+            }
+
+            int top = 0;
+            stack[0] = start;
+            zoneOf[start] = zoneCount;
+
+            while (top >= 0) {
+                int current = stack[top--];
+
+                for (int slideIndex : slidesInto[current]) {
+                    int nextCell = s.from()[slideIndex];
+
+                    if (zoneOf[nextCell] == -1) {
+                        zoneOf[nextCell] = zoneCount;
+                        stack[++top] = nextCell;
+                    }
+                }
+            }
+
+            zoneCount++;
+        }
+
+        return zoneOf;
     }
 
     /**
@@ -30,7 +104,56 @@ public class Zones {
      * [1] the cost of the cheapest route from the zone of cell 0 to the zone of the last cell.
      */
     public static long[] routes(Input.Slides s, int[] zoneOf, int zoneCount) {
-        // TODO
-        return new long[]{0, 0};
+        int[] fromCell = s.from();
+        int[] toCell = s.to();
+        int[] slideTime = s.time();
+
+        int[] head = new int[zoneCount];
+        int[] next = new int[s.count()];
+
+        Arrays.fill(head, -1);
+
+        for (int i = 0; i < s.count(); i++) {
+            int fromZone = zoneOf[fromCell[i]];
+            next[i] = head[fromZone];
+            head[fromZone] = i;
+        }
+
+        long[] longest = new long[zoneCount];
+        long[] dist = new long[zoneCount];
+
+        Arrays.fill(longest, 1);
+        Arrays.fill(dist, Long.MAX_VALUE);
+
+        int startZone = zoneOf[0];
+        int exitZone = zoneOf[s.n() - 1];
+
+        dist[startZone] = 0;
+
+        long flowStages = 1;
+
+        for (int zone = 0; zone < zoneCount; zone++) {
+            flowStages = Math.max(flowStages, longest[zone]);
+
+            for (int i = head[zone]; i != -1; i = next[i]) {
+                int nextZone = zoneOf[toCell[i]];
+
+                if (zone == nextZone) {
+                    continue;
+                }
+
+                longest[nextZone] = Math.max(
+                        longest[nextZone], longest[zone] + 1
+                );
+
+                if (dist[zone] != Long.MAX_VALUE) {
+                    dist[nextZone] = Math.min(
+                            dist[nextZone], dist[zone] + slideTime[i]
+                    );
+                }
+            }
+        }
+
+        return new long[]{flowStages, dist[exitZone]};
     }
 }
