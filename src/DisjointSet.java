@@ -23,7 +23,7 @@ public class DisjointSet {
         if (parent[x] != x) {
             parent[x] = find(parent[x]);
         }
-        return x;
+        return parent[x];
     }
 
     /** Joins the sets of a and b. Returns true if they were different sets, false if they were already one set. */
